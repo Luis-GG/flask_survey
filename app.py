@@ -1,6 +1,8 @@
+from crypt import methods
+from operator import methodcaller
 from flask import Flask, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
-import surveys
+from surveys import surveys
 
 
 app = Flask(__name__)
@@ -9,15 +11,23 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 debug = DebugToolbarExtension(app)
 
-
-
+current_survey = None
 
 
 @app.route("/")
+def select_survey():
+
+    return render_template("select_survey.html", surveys=surveys)
+
+
+@app.route("/survey_start", methods=["POST"])
 def home_page():
-    title = surveys.satisfaction_survey.title
-    instructions = surveys.satisfaction_survey.instructions
-    
+
+    global current_survey
+    current_survey = surveys[request.form['survey_selected']]
+
+    title = current_survey.title
+    instructions = current_survey.instructions
 
     return render_template("home_page.html", title=title, instructions=instructions)
 
@@ -33,25 +43,24 @@ def start_survey():
 def questions(quest_num):
 
     ##
-    if request.path != f"/questions/{len(session['responses'])}" or quest_num > len(surveys.satisfaction_survey.questions):
+    if request.path != f"/questions/{len(session['responses'])}" or quest_num > len(current_survey.questions):
         flash("INVALID URL")
         return redirect(f"/questions/{len(session['responses'])}")
-        
-    ##
-    question = surveys.satisfaction_survey.questions[quest_num]
-    choices = question.choices
 
+    ##
+    question = current_survey.questions[quest_num]
+    choices = question.choices
 
     return render_template("questions.html", question=question, quest_num=quest_num, choices=choices)
 
 
-@app.route("/answer", methods=["POST","GET"])
+@app.route("/answer", methods=["POST", "GET"])
 def answer():
     response_session_list = session['responses']
     response_session_list.append(request.form["answer"])
     session['responses'] = response_session_list
 
-    if(len(session['responses']) == len(surveys.satisfaction_survey.questions)):
+    if(len(session['responses']) == len(current_survey.questions)):
         return redirect("/completed")
 
     return redirect(f"/questions/{len(session['responses'])}")
