@@ -4,5 +4,11 @@
 <div class="container">
     <h1>Thank you!</h1>
     <p>You completed the survey!</p>
+
+    {% for res in session["responses"] %}
+    <p>{{res}}</p>
+    {% endfor %}
 </div>
+<form action="/"><button>Home</button></form>
+
 {% endblock %}

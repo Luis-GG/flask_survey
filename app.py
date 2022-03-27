@@ -1,6 +1,6 @@
 from crypt import methods
 from operator import methodcaller
-from flask import Flask, request, render_template, redirect, flash, session
+from flask import Flask, make_response, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import surveys
 
@@ -11,7 +11,7 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 debug = DebugToolbarExtension(app)
 
-current_survey = None
+# current_survey = None
 
 
 @app.route("/")
@@ -20,11 +20,15 @@ def select_survey():
     return render_template("select_survey.html", surveys=surveys)
 
 
-@app.route("/survey_start", methods=["POST"])
+@app.route("/survey_start", methods=["POST", "GET"])
 def home_page():
 
     global current_survey
     current_survey = surveys[request.form['survey_selected']]
+
+    if current_survey.title in request.cookies:
+        flash("You have already completed this survey")
+        return redirect("/")
 
     title = current_survey.title
     instructions = current_survey.instructions
@@ -68,5 +72,8 @@ def answer():
 
 @app.route("/completed")
 def thank_you():
+    content = render_template("thanks.html")
+    res = make_response(content)
+    res.set_cookie(current_survey.title, "completed")
 
-    return render_template("thanks.html")
+    return res

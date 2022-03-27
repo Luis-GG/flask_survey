@@ -9,7 +9,7 @@
     <form action="/answer" method="POST">
         <div>
             {% for choice in choices %}
-            <input type="radio" value={{choice}} name="answer">
+            <input type="radio" value={{choice}} name="answer" required>
             <label for="{{choice}}">{{choice}}</label>
             {% endfor %}
         </div>
